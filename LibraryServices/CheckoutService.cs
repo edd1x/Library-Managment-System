@@ -16,6 +16,10 @@ namespace Library.Service
         {
             _context = context;
         }
+        public IEnumerable<Patron> getLibraryCards()
+        {
+            return _context.Patrons;
+        }
 
         public void Add(Checkouts newCheckout)
         {
@@ -51,6 +55,8 @@ namespace Library.Service
             var libraryCard = _context.LibraryCards
                 .Include(c => c.Checkouts)
                 .FirstOrDefault(a => a.Id == libraryCardId);
+
+            if (libraryCard == null) return;
 
             var checkout = new Checkouts
             {

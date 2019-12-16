@@ -1,40 +1,84 @@
 ﻿using Library.Models.Catalog;
 using Library.Models.Checkout;
 using LibraryData;
+using LibraryData.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
-    
+using System.Net;
+
+
 namespace Library.Controllers
 {
-    public class CatalogController:Controller
+    public class CatalogController : Controller
     {
         private readonly ILibraryAssetService _assetsService;
         private readonly ICheckout _checkoutsService;
-        public CatalogController(ILibraryAssetService library,ICheckout checkout)
+        private readonly IPatrons _patrons;
+        public CatalogController(ILibraryAssetService library, ICheckout checkout, IPatrons patrons)
         {
             _assetsService = library;
             _checkoutsService = checkout;
+            _patrons = patrons;
         }
-        public IActionResult Index() // Ovdje se ulazi u home
+        public IActionResult Index()
         {
             var assetModels = _assetsService.GetAll();
 
-            var listingResults = assetModels
-                .Select(result => new AssetIndexListingModel
-            {
-                Id = result.Id,
-                ImgUrl = result.ImageUrl,
-                AuthorOrDirector = _assetsService.GetAuthorOrDirector(result.Id),
-                Title = result.Title,
-                Type = _assetsService.GetType(result.Id)
-            }).ToList();
+            var listingResult = assetModels
+                .Select(a => new AssetIndexListingModel
+                {
+                    Id = a.Id,
+                    ImgUrl = a.ImageUrl,
+                    AuthorOrDirector = _assetsService.GetAuthorOrDirector(a.Id),
+                    DeweyIndex = _assetsService.GetDeweyIndex(a.Id),
+                    Title = _assetsService.GetTitle(a.Id),
+                    Type = _assetsService.GetType(a.Id),
+                    NumberOfCopies = _checkoutsService.GetNumberOfCopies(a.Id)
+                }).ToList();
 
             var model = new AssetIndexModel
             {
-                Assets = listingResults
-             };
+                Assets = listingResult
+            };
 
-             return View(model);
+            return View(model);
+        }
+
+        public IActionResult AddAsset()
+        {
+            if (!ModelState.IsValid)
+            {
+                Response.StatusCode = (int)HttpStatusCode.BadRequest;
+
+                return PartialView("AddAsset");
+            }
+            
+
+
+            var model = new AddAssetModel
+            {
+                Author = "",
+                ISBN="",
+                deweyIndex="",
+                Title = "",
+                Year = "",
+                Cost = 0,
+                Status=_assetsService.GetStatuses(),
+                Location=_assetsService.GetBranches(),
+                NumberOfCopies = 0,
+                ImgUrl = ""
+            };
+
+            return View(model);
+        }
+        [HttpPost]
+        public IActionResult PlaceAsset(string author, string title, string year, int statusId
+            , string imgUrl, string isbn, string deweyIndex, int locationId, decimal cost, int numberOfCopies)
+        {
+
+            _assetsService.AddAsset( author,  title,  year,  statusId
+            ,  imgUrl,  isbn,  deweyIndex,  locationId,  cost,  numberOfCopies);
+            return RedirectToAction("Index");
         }
         public IActionResult Detail(int id)
         {
@@ -65,25 +109,31 @@ namespace Library.Controllers
                 CurrentHolds = currentHolds,
                 PatronName = _checkoutsService.GetCurrentPatron(id)
             };
-            
+
             return View(model);
         }
 
         public IActionResult Checkout(int id)
         {
             var asset = _assetsService.Get(id);
-
             var model = new CheckoutModels
             {
                 AssetId = id,
                 ImageUrl = asset.ImageUrl,
                 Title = asset.Title,
                 LibraryCardId = "",
-                IsCheckedOut = _checkoutsService.IsCheckedOut(id)
-            };
+                IsCheckedOut = _checkoutsService.IsCheckedOut(id),
+                cards = _checkoutsService.getLibraryCards() 
+
+        };
             return View(model);
         }
+        public IActionResult DeleteAsset(int id)
+        {
+            _assetsService.deleteAsset(id);
 
+            return Redirect("/Catalog/Index");
+        }
         public IActionResult Hold(int id)
         {
             var asset = _assetsService.Get(id);
@@ -94,7 +144,8 @@ namespace Library.Controllers
                 ImageUrl = asset.ImageUrl,
                 Title = asset.Title,
                 LibraryCardId = "",
-                HoldCount = _checkoutsService.GetCurrentHolds(id).Count()
+                HoldCount = _checkoutsService.GetCurrentHolds(id).Count(),
+                cards = _checkoutsService.getLibraryCards()
             };
             return View(model);
         }
@@ -116,10 +167,11 @@ namespace Library.Controllers
             _checkoutsService.MarkFound(id);
             return RedirectToAction("Detail", new { id });
         }
-
+       
         [HttpPost]
         public IActionResult PlaceCheckout(int assetId, int libraryCardId)
         {
+            
             _checkoutsService.CheckoutItem(assetId, libraryCardId);
             return RedirectToAction("Detail", new { id = assetId });
         }

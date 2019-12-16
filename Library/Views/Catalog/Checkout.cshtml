@@ -23,10 +23,6 @@
                     <p id="itemTitle">@Model.Title</p>
                     <img class="detailImage" src="@Model.ImageUrl" />
                 </div>
-            </div>
-            @*you could also use tag helpers.*@
-            <div class="col-md-9">
-                @*this is an html helper - it creates an object that implements idisposable*@
                 @using (Html.BeginForm("PlaceCheckout", "Catalog", FormMethod.Post))
                 {
                     @Html.HiddenFor(a => a.AssetId)
@@ -40,6 +36,5 @@
                     </div>
                 }
             </div>
-        </div>
     </div>
 </div>
