@@ -68,5 +68,9 @@ namespace LibraryServices
                 .Where(a=>a.LibraryCard.Id==cardId);
 
         }
+        public IEnumerable<string> GetLibraryCards()
+        {
+            return _context.Patrons.Include(a=>a.LibraryCard).Select(a => a.FullName+" - "+a.LibraryCard.Id);
+        }
     }
 }

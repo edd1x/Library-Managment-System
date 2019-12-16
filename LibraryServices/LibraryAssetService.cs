@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Web.Mvc;
 
 namespace LibraryServices
 {
@@ -11,6 +12,7 @@ namespace LibraryServices
     {
         private readonly LibraryContext _context;
 
+      
         public LibraryAssetService(LibraryContext context)
         {
             _context = context;
@@ -21,13 +23,34 @@ namespace LibraryServices
             _context.Add(newAsset);
             _context.SaveChanges();
         }
-
+        
+        public void deleteAsset(int Id)
+        {
+            var asset = _context.LibraryAsset.FirstOrDefault(a => a.Id == Id);
+            var holds = _context.Holds.Include(a=>a.LibraryAsset).Where(a => a.LibraryAsset.Id == Id);
+            foreach (Holds item in holds)
+            {
+                _context.Remove(item); 
+            }
+            _context.Remove(asset);
+            _context.SaveChanges();
+        }
         public LibraryAsset Get(int id)
         {
             return _context.LibraryAsset
                 .Include(a => a.Status)
                 .Include(a => a.Location)
                 .FirstOrDefault(a => a.Id == id);
+        }
+        public List<Status> GetStatuses()
+        {
+            return _context.Status.ToList();
+        }
+        public List<LibraryBranch> GetBranches()
+        {
+            return _context.LibraryBranch.ToList();
+
+
         }
 
         public IEnumerable<LibraryAsset> GetAll()
@@ -97,6 +120,38 @@ namespace LibraryServices
         {
             var video = (Video)Get(id);
             return video.Director;
+        }
+        private bool isAlreadyAdded(string title)
+        {
+            var nesto = _context.LibraryAsset.Where(a => a.Title == title);
+
+            if (nesto == null) return true;
+            else return false;
+        }
+        public void AddAsset(string author, string title, string year,int statusId
+            ,string imgUrl,string isbn,string deweyIndex,int locationId, decimal cost, int numberOfCopies)
+        {
+            if (isAlreadyAdded(title)) return;
+
+            var stat = _context.Status.FirstOrDefault(a => a.Name == "Available");
+            var locat = _context.LibraryBranch.FirstOrDefault(a => a.Id == 2);
+
+            var book = new Book
+            {
+                Title = title,
+                Author = author,
+                Status = stat,
+                NumberOfCopies = numberOfCopies,
+                ISBN=isbn,
+                DeweyIndex=deweyIndex,
+                ImageUrl=imgUrl,
+                Year = int.Parse(year),
+                Location = locat,
+                Cost = cost
+            };
+
+            _context.Add(book);
+            _context.SaveChanges();
         }
     }
 }

@@ -11,6 +11,8 @@ namespace LibraryData
         Checkouts Get(int id);
         void Add(Checkouts newCheckout);
         IEnumerable<CheckoutHistory> GetCheckoutHistory(int id);
+        IEnumerable<Patron> getLibraryCards();
+
         void PlaceHold(int assetId, int libraryCardId);
         void CheckoutItem(int id, int libraryCardId);
         void CheckInItem(int id);

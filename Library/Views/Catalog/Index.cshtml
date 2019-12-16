@@ -14,23 +14,26 @@
                     <th>Title</th>
                     <th>Author / Director</th>
                     <th>Dewey Call Number</th>
+                    <th><a href="/Catalog/AddAsset">Dodaj Novu Knjigu</a></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var asset in @Model.Assets)
                 {
-                    <tr class="assetRow">
-                        <td class="">
-                            <div>
-                                <a asp-controller="Catalog" asp-action="Detail" asp-route-id="@asset.Id">
-                                    <img src="@asset.ImgUrl" class="imageCell" />
-                                </a>
-                            </div>
-                        </td>
-                        <td class="">@asset.Title</td>
-                        <td class="">@asset.AuthorOrDirector</td>
-                        <td class="">@asset.DeweyIndex</td>
-                    </tr>
+                <tr class="assetRow">
+                    <td class="">
+                        <div>
+                            <a asp-controller="Catalog" asp-action="Detail" asp-route-id="@asset.Id">
+                                <img src="@asset.ImgUrl" class="imageCell" />
+                            </a>
+                        </div>
+                    </td>
+                    <td class="">@asset.Title</td>
+                    <td class="">@asset.AuthorOrDirector</td>
+                    <td class="">@asset.DeweyIndex</td>
+                    <td ><a asp-controller="Catalog" asp-action="deleteAsset" asp-route-id="@asset.Id"> X </a></td>
+
+                </tr>
                 }
             </tbody>
         </table>
